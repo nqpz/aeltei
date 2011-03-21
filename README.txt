@@ -8,6 +8,9 @@ one to use a keyboard to enter and play musical notes in a curses interface,
 i.e. on the command line. Current limitations include only support for one
 channel, no pitch bending, and no saving recordings as MIDI files.
 
+aeltei only works on Python 2.x where x >= 5. Python 3 support would require
+Python 3 support in the modules used by this program.
+
 
 License
 =======

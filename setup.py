@@ -17,13 +17,16 @@ conf = dict(
     classifiers=['Development Status :: 3 - Alpha',
                  'Intended Audience :: End Users/Desktop',
                  'Intended Audience :: Developers',
-                 'Topic :: Software Development :: Libraries :: Python Modules',
                  'Topic :: Utilities',
-                 'Environment :: Console',
+                 'Topic :: Multimedia :: Sound/Audio :: MIDI',
+                 'Topic :: Multimedia :: Sound/Audio :: Mixers',
+                 'Topic :: Multimedia :: Sound/Audio :: Players',
+                 'Topic :: Multimedia :: Sound/Audio :: Sound Synthesis',
+                 'Environment :: Console :: Curses',
                  'License :: DFSG approved',
                  'License :: OSI Approved :: GNU Affero General Public License v3',
                  'Operating System :: OS Independent',
-                 'Programming Language :: Python :: 2'
+                 'Programming Language :: Python :: 2.5'
                  ]
 )
 
