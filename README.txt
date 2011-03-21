@@ -24,16 +24,18 @@ reports). This is version 0.1.0 of the program.
 Installation
 ============
 
-To install aeltei, run::
+To install aeltei the easy way, run::
 
-  python setup.py install
+  easy_install aeltei
 
-You must be a superuser to do this.
+(You must be a superuser and have python-setuptools installed to do this.)
 
 Alternatively, you can download aeltei either from
 http://metanohi.org/projects/aeltei/ or from http://pypi.python.org/pypi/aeltei
 and then install it from the downloaded file. This way you'll also get useful
-example files.
+example files. To install aeltei this way, run::
+
+  python setup.py install
 
 Dependencies
 ------------

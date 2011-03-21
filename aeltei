@@ -181,7 +181,13 @@ _max_note = 115
 _max_note_range = range(_max_note + 1)
 _notes = tuple(Note().from_int(i) for i in _max_note_range)
 
-_nothing = lambda: None
+_nothing = lambda *x: None
+class _nowriter(object):
+    def write(self, m):
+        pass
+
+def _del_stderr():
+    sys.stderr = _nowriter
 
 # These are ugly defaults. Most people should change these using the calibrator.
 _ = 'qwertyuiopasdfghjklzxcvbnm'
@@ -269,14 +275,16 @@ class AelteiPlayer(object):
             self.set_samplerate = self._set_wav_frame_rate
             self.sleep = self._add_wav_frames
             self.end = lambda: self.wave.close()
-
+        self.textra = 0
+            
     def _set_wav_frame_rate(self, f):
         self.wave.setframerate(f)
         self.frame_rate = f
 
     def _add_wav_frames(self, t):
-        self.wave.writeframesraw(fluidsynth.midi.fs.get_samples(
-                int((1000.0 * self.frame_rate) / t)))
+        self.textra += t
+        self.wave.writeframes(fluidsynth.midi.fs.get_samples(
+                int((t / 1000.0) * self.frame_rate)))
 
     def start(self):
         if self.wavfile:
@@ -305,9 +313,14 @@ class AelteiPlayer(object):
                     fluidsynth.stop_Note(int(s))
                 elif nid == 7:
                     self.sleep(t)
-                    fluidsynth.stop_everything()
-        self.sleep(1000)
+                    stop_all_notes()
+        self.sleep(self.textra + 1000)
         self.end()
+
+def stop_all_notes():
+    # fluidsynth.stop_everything() # Doesn't work that well
+    for i in _max_note_range:
+        fluidsynth.stop_Note(i)
 
 class AelteiBase(object):
     def __init__(self):
@@ -497,7 +510,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         self.tracker.stop_note(i)
 
     def stop_all_notes(self):
-        fluidsynth.stop_everything()
+        stop_all_notes()
         self.tracker.stop_all_notes()
 
     def increase_level(self, num=1):
@@ -906,7 +919,7 @@ keyfile will be sent to standard out
                 options.note_keys = pickle.load(f)
         except (IndexError, OSError):
             options.note_keys = None
-            
+        _del_stderr()
         aeltei = Aeltei(options.samplerate, options.volume,
                         options.soundfont, options.driver,
                         options.note_keys, options.auto_load_save,
