@@ -18,6 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ##[ Maintainer  ]## Niels Serup <ns@metanohi.org>
+##[ Website  ]## http://metanohi.org/projects/aeltei/
+##[ Development  ]## http://gitorious.org/aeltei
+
+# [Lacking comments]
 
 from __future__ import with_statement
 import sys
@@ -884,10 +888,12 @@ keyfile will be sent to standard out
     if options.calibrate:
         print calibrate_keys(),
     elif options.play_track:
-        a = AelteiPlayer(options.play_track, driver=options.driver, wavfile=False)
+        a = AelteiPlayer(options.play_track, driver=options.driver,
+                         wavfile=False)
         a.start()
     elif options.record_track:
-        a = AelteiPlayer(options.record_track[0], driver=False, wavfile=options.record_track[1])
+        a = AelteiPlayer(options.record_track[0],
+                         driver=False, wavfile=options.record_track[1])
         a.start()
 
     if not options.clear_cache and not options.clear_saves and \
