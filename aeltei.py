@@ -24,6 +24,7 @@ import sys
 import os
 import shutil
 import re
+import time
 import subprocess
 import textwrap
 import datetime
@@ -32,6 +33,8 @@ import curses
 import curses.ascii
 import curses.textpad
 import locale
+import array
+import wave
 try: import cPickle as pickle
 except ImportError: import pickle
 
@@ -145,10 +148,8 @@ enter an instrument name and get an instrument. The first instrument where the
 search term appears in its name will be chosen''')
 
 
-
 class ExitCursesWrapper(Exception):
     pass
-
 
 __tool_name__ = 'aeltei'
 __tool_version__ = (0, 1, 0)
@@ -175,6 +176,8 @@ _usable_drivers = ('alsa', 'oss', 'jack', 'portaudio', 'pulseaudio')
 _max_note = 115
 _max_note_range = range(_max_note + 1)
 _notes = tuple(Note().from_int(i) for i in _max_note_range)
+
+_nothing = lambda: None
 
 # These are ugly defaults. Most people should change these using the calibrator.
 _ = 'qwertyuiopasdfghjklzxcvbnm'
@@ -241,42 +244,66 @@ class NoteTracker(object):
 
     def put(self, nid, arg=None):
         t = self.get_time()
-        self.file.write('%d.%d.%s\n' % (nid, t, str(arg) if arg is not None else ''))
+        self.file.write('%d.%d.%s\n' % (nid, t, str(arg)
+                                        if arg is not None else ''))
 
     def end(self):
         self.file.close()
 
 class AelteiPlayer(object):
-    def __init__(self, path, driver='alsa'):
+    def __init__(self, path, driver='alsa', wavfile=None):
         self.path = path
         self.driver = driver
+        self.wavfile = wavfile
+        if driver:
+            self.init = lambda sf2: fluidsynth.init(sf2, self.driver)
+            self.set_samplerate = _nothing
+            self.sleep = lambda t: time.sleep(t / 1000.0)
+            self.end = _nothing
+        elif wavfile:
+            self.init = lambda sf2: fluidsynth.midi.load_sound_font(sf2)
+            self.set_samplerate = self._set_wav_frame_rate
+            self.sleep = self._add_wav_frames
+            self.end = lambda: self.wave.close()
+
+    def _set_wav_frame_rate(self, f):
+        self.wave.setframerate(f)
+        self.frame_rate = f
+
+    def _add_wav_frames(self, t):
+        self.wave.writeframesraw(fluidsynth.midi.fs.get_samples(
+                int((1000.0 * self.frame_rate) / t)))
 
     def start(self):
+        if self.wavfile:
+            self.wave = wave.open(self.wavfile, 'wb')
+            self.wave.setnchannels(2)
+            self.wave.setsampwidth(2)
+
         with open(self.path) as f:
             for x in f:
                 line = x.rstrip().split('.', 2)
                 nid, t = map(int, line[:2])
                 s = line[2]
                 if nid == 1:
-                    fluidsynth.init(s, self.driver)
+                    self.init(s)
                 elif nid == 2:
-                    pass # Eh.. Like in the rest of this program, the given
-                         # samplerate currently isn't actually /used/.
+                    self.set_samplerate(int(s))
                 elif nid == 3:
                     fluidsynth.main_volume(1, int(s))
                 elif nid == 4:
                     fluidsynth.set_instrument(1, *eval(s))
                 elif nid == 5:
-                    fluidsynth.sleep(t / 1000.0)
+                    self.sleep(t)
                     fluidsynth.play_Note(int(s))
                 elif nid == 6:
-                    fluidsynth.sleep(t / 1000.0)
+                    self.sleep(t)
                     fluidsynth.stop_Note(int(s))
                 elif nid == 7:
-                    fluidsynth.sleep(t / 1000.0)
-                    for i in _max_note_range:
-                        fluidsynth.stop_Note(i)
-            fluidsynth.sleep(1)
+                    self.sleep(t)
+                    fluidsynth.stop_everything()
+        self.sleep(1000)
+        self.end()
 
 class AelteiBase(object):
     def __init__(self):
@@ -385,7 +412,8 @@ is not installed' % (_sf2text_prog, _sf2text_package))
     def save_saves(self):
         try:
             with open(self.cfg_saves_base_info, 'w') as f:
-                pickle.dump((self.base_level, self.soundfont, self.current_instrument, self.instruments_text), f)
+                pickle.dump((self.base_level, self.soundfont,
+                             self.current_instrument, self.instruments_text), f)
         except (AttributeError, IOError):
             pass
 
@@ -465,8 +493,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         self.tracker.stop_note(i)
 
     def stop_all_notes(self):
-        for i in _max_note_range:
-            fluidsynth.stop_Note(i)
+        fluidsynth.stop_everything()
         self.tracker.stop_all_notes()
 
     def increase_level(self, num=1):
@@ -541,8 +568,9 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         self.generate_help_text()
 
     def generate_help_text(self):
-        self.text = ('This is the help screen for Aeltei, a virtual multi instrument environment.',
-                     '''
+        self.text = (
+'This is the help screen for Aeltei, a virtual multi instrument environment.',
+'''
 
 When you press a character on your keyboard, and that character is linked to a
 note, that note will be either played or stopped, depending on what you set it
@@ -553,8 +581,8 @@ to stopping note 0--25. It is strongly advised not to use this default (because
 it is not very good).
 
 ''',
-                     'Keyboard bindings and available instruments:', (self.keybindings_text,),
-                     (self.instruments_text,))
+   'Keyboard bindings and available instruments:', (self.keybindings_text,),
+                                                   (self.instruments_text,))
         wrapper = textwrap.TextWrapper(width=self.help_width)
         self.text = '\n\n'.join(wrapper.fill(x.strip().replace('\n', ' ')).strip() \
                                     if isinstance(x, basestring) \
@@ -856,10 +884,11 @@ keyfile will be sent to standard out
     if options.calibrate:
         print calibrate_keys(),
     elif options.play_track:
-        a = AelteiPlayer(options.play_track, options.driver)
+        a = AelteiPlayer(options.play_track, driver=options.driver, wavfile=False)
         a.start()
     elif options.record_track:
-        parser.error('feature not implemented yet (shouldn\'t be too difficult)')
+        a = AelteiPlayer(options.record_track[0], driver=False, wavfile=options.record_track[1])
+        a.start()
 
     if not options.clear_cache and not options.clear_saves and \
             not options.calibrate and not options.play_track and \
