@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-##[ Maintainer  ]## Niels Serup <ns@metanohi.org>
-##[ Website  ]## http://metanohi.org/projects/aeltei/
+##[ Maintainer  ]## Niels Serup <ns@metanohi.name>
+##[ Website  ]## http://metanohi.name/projects/aeltei/
 ##[ Development  ]## http://gitorious.org/aeltei
 
 # [Lacking comments]
@@ -37,8 +37,8 @@ import curses
 import curses.ascii
 import curses.textpad
 import locale
-import array
 import wave
+import socket
 try: import cPickle as pickle
 except ImportError: import pickle
 
@@ -141,6 +141,7 @@ K_SMDOWN = _('d', 'C-v', '<space>', '<pagedown>',
              desc='scroll down height of page')
 K_SMUP = _('u', 'M-v', '<backspace>', '<pageup>',
            desc='scroll up height of page')
+K_UPDATE = _('U', 'C-u', desc='update the terminal dimensions')
 
 K_GET = _('C-g', '<left>', desc='''
 enter an instrument\'s id number and get the instrument. See the table below
@@ -156,7 +157,7 @@ class ExitCursesWrapper(Exception):
     pass
 
 __tool_name__ = 'aeltei'
-__tool_version__ = (0, 1, 0)
+__tool_version__ = (0, 2, 0)
 __tool_short_description__ = 'a virtual multi instrument environment'
 __tool_version_description__ = '''\
 %s %s
@@ -562,12 +563,15 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
         self.color_white_on_black = curses.color_pair(1) | curses.A_BOLD
 
-        self.height, self.width = self.scr.getmaxyx()
+        self._update_dimensions()
         self.help_width = self.width if self.width < 80 else 80
         self.keybindings_text = _keybindings.format(self.help_width)
         self._start()
         self.update_status()
         self._loop()
+
+    def _update_dimensions(self):
+        self.height, self.width = self.scr.getmaxyx()
 
     def _start(self):
         self.setup_config_dir()
@@ -618,12 +622,19 @@ it is not very good).
         for t in self.text[self.line:self.line + self.height - 1]:
             self.scr.addstr(y, 0, t)
             y += 1
+        aval = (100 * (self.line + self.height) / float(self.lines_num))
+        if aval > 100:
+            self.help_full = True
+            aval = 100
+        else:
+            self.help_full = False
         self.scr.addstr(self.height - 1, 0, '~~ %3d%% read ~~' %
-                        (100 * (self.line + self.height) /
-                         float(self.lines_num)), self.color_white_on_black)
+                        aval, self.color_white_on_black)
         self.scr.refresh()
 
     def scroll_down(self, n=1):
+        if self.help_full:
+            return
         n_line = self.line + n
         if n_line < 0:
             n_line = 0
@@ -669,6 +680,8 @@ it is not very good).
                 self.scroll_much_down()
             elif key in K_SMUP:
                 self.scroll_much_up()
+            elif key in K_UPDATE:
+                self._update_dimensions()
             self._refresh_help_pad()
         
     def _loop(self):
@@ -694,6 +707,8 @@ it is not very good).
             elif key in K_GET:
                 num = int(self.get_entered_text())
                 self.select_instrument(num)
+            elif key in K_UPDATE:
+                self._update_dimensions()
             else:
                 self.pass_note_from_key(key)
             self.update_status()

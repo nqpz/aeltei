@@ -17,8 +17,8 @@ License
 
 aeltei is free software under the terms of the GNU Affero General Public
 License version 3 (or any later version). The author of aeltei is Niels Serup,
-contactable at ns@metanohi.org (for now, just use this address for bug
-reports). This is version 0.1.0 of the program.
+contactable at ns@metanohi.name (for now, just use this address for bug
+reports). This is version 0.2.0 of the program.
 
 
 Installation
@@ -31,17 +31,18 @@ To install aeltei the easy way, run::
 (You must be a superuser and have python-setuptools installed to do this.)
 
 Alternatively, you can download aeltei either from
-http://metanohi.org/projects/aeltei/ or from http://pypi.python.org/pypi/aeltei
-and then install it from the downloaded file. This way you'll also get useful
-example files. To install aeltei this way, run::
+http://metanohi.name/projects/aeltei/ or from
+http://pypi.python.org/pypi/aeltei and then install it from the downloaded
+file. This way you'll also get useful example files. To install aeltei this
+way, run::
 
   python setup.py install
 
 Dependencies
 ------------
 
-aeltei depends on ``fluidsynth``, ``mingus``, ``pyFluidSynth``, and the
-availability of a soundfont (free soundfonts come with ``fluidsynth``).
+aeltei depends on ``fluidsynth``, ``mingus`` and the availability of a
+soundfont (free soundfonts come with ``fluidsynth``).
 
 
 Use
