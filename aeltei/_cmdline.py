@@ -1,7 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
-# aeltei: a virtual multi instrument environment
+# aeltei: a virtual multi soundfont instrument environment
 # Copyright (C) 2011  Niels Serup
 
 # This program is free software: you can redistribute it and/or modify
@@ -17,13 +16,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-##[ Maintainer  ]## Niels Serup <ns@metanohi.name>
-##[ Website  ]## http://metanohi.name/projects/aeltei/
-##[ Development  ]## http://gitorious.org/aeltei
+# Maintainer:  Niels Serup <ns@metanohi.name>
+# Abstract filename: aeltei.cmdline
 
-# [Lacking comments]
-
-from __future__ import with_statement
 import sys
 import os
 import shutil

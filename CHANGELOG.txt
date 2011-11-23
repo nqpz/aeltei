@@ -1,0 +1,15 @@
+* CHANGELOG
+
+** v0.2.0
+
+Second release. Python 3.1+ only. Now also with support for a very simple
+PyGame interface meant for graphics tablets and mice. Can now send notes to a
+server and listen to them via another listener program instead of playing them
+directly. This allows for more than one person to test soundfonts together.
+
+
+** v0.1.0
+
+Initial release. Support for Python 2.5+, not Python 3. Curses interface
+only. Support for only one channel, no pitch bending, and no support for saving
+sounds as MIDI files.

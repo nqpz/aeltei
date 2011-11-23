@@ -1,15 +1,20 @@
+NOTE: I started working on a new version of aeltei, but then I dropped it. This
+means that the setup.py file does not work right now. To run aeltei, run
+aeltei-run and do not use setup.py (ignore the install instructions in this
+README). To install aeltei in its current state, copy aeltei-run to a directory
+in your PATH.
 
 ======
 aeltei
 ======
 
-aeltei is a virtual multi instrument environment using soundfonts. It allows
-one to use a keyboard to enter and play musical notes in a curses interface,
-i.e. on the command line. Current limitations include only support for one
-channel, no pitch bending, and no saving recordings as MIDI files.
-
-aeltei only works on Python 2.x where x >= 5. Python 3 support would require
-Python 3 support in the modules used by this program.
+aeltei is a Python 3.1 virtual multi soundfont instrument environment. It
+allows one to a) use a keyboard to enter and play musical notes in a curses
+interface, or b) use a graphics tablet or a mouse to play musical notes in a
+PyGame interface. These notes can either be played directly or sent to an
+aeltei server (with support for more than one client), which another program
+can then listen to. Current limitations include support for only one channel,
+no pitch bending, and no support for saving sounds as MIDI files.
 
 
 License
@@ -26,23 +31,27 @@ Installation
 
 To install aeltei the easy way, run::
 
-  easy_install aeltei
+  easy_install3 aeltei
 
 (You must be a superuser and have python-setuptools installed to do this.)
 
 Alternatively, you can download aeltei either from
 http://metanohi.name/projects/aeltei/ or from
 http://pypi.python.org/pypi/aeltei and then install it from the downloaded
-file. This way you'll also get useful example files. To install aeltei this
-way, run::
+file. To install aeltei this way, run::
 
-  python setup.py install
+  tar xzf aeltei-0.2.0.tar.gz
+  cd aeltei-0.2.0/
+  python3 setup.py install
 
 Dependencies
 ------------
 
-aeltei depends on ``fluidsynth``, ``mingus`` and the availability of a
-soundfont (free soundfonts come with ``fluidsynth``).
+aeltei depends on the ``fluidsynth`` library, the ``mingus`` Python module, the
+progam ``sf2text`` from the ``awesfx`` package of programs, and the
+availability of a soundfont (free soundfonts come with ``fluidsynth``). When
+this README was written, a Python 3 version of mingus was available at
+http://code.google.com/r/artdent-mingus-python3/
 
 
 Use
