@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # aeltei: a virtual multi soundfont instrument environment
-# Copyright (C) 2011  Niels Serup
+# Copyright (C) 2011, 2012  Niels G. W. Serup
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Maintainer:  Niels Serup <ns@metanohi.name>
-# Abstract filename: aeltei.cmdline
+# Maintainer:  Niels G. W. Serup <ns@metanohi.name>
+# Abstract filename: aeltei.temp.cmdline
 
 import sys
 import os
@@ -28,6 +28,7 @@ import subprocess
 import textwrap
 import datetime
 import math
+import traceback
 import curses
 import curses.ascii
 import curses.textpad
@@ -156,7 +157,7 @@ __tool_version__ = (0, 2, 0)
 __tool_short_description__ = 'a virtual multi instrument environment'
 __tool_version_description__ = '''\
 %s %s
-Copyright (C) 2011  Niels Serup
+Copyright (C) 2011, 2012  Niels G. W. Serup
 License AGPLv3+: GNU AGPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.\
@@ -205,9 +206,9 @@ class ApproximatingDict(dict):
 
 class NoteTracker(object):
     def __init__(self, file):
+        self.time = datetime.datetime.now()
         try:
             self.file = open(file, 'w')
-            self.time = datetime.datetime.now()
         except (TypeError, IOError):
             nothing = lambda *x: None
             self.set_soundfont = nothing
@@ -287,6 +288,8 @@ class AelteiPlayer(object):
             self.wave = wave.open(self.wavfile, 'wb')
             self.wave.setnchannels(2)
             self.wave.setsampwidth(2)
+
+
 
         with open(self.path) as f:
             for x in f:
@@ -419,7 +422,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
                 if prev_soundfont == self.soundfont:
                     self.select_instrument(prev_instrument)
                     self.instruments_text = prev_instruments_text
-        except (IOError, ValueError):
+        except (IOError, ValueError, pickle.UnpicklingError, EOFError):
             self.base_level = 0
 
     def save_saves(self):
@@ -557,7 +560,6 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         curses.curs_set(0)
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
         self.color_white_on_black = curses.color_pair(1) | curses.A_BOLD
-
         self._update_dimensions()
         self.help_width = self.width if self.width < 80 else 80
         self.keybindings_text = _keybindings.format(self.help_width)
@@ -575,7 +577,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         fluidsynth.init(self.soundfont, self.driver)
         fluidsynth.main_volume(1, self.volume)
 
-        if self.auto_load_save:
+        if self.auto_load_save: 
             self.get_saves()
         if self.current_instrument is None:
             self.select_instrument(0)
