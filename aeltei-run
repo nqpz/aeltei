@@ -471,7 +471,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         ts = [sl % (i, self.instruments[i][0]) for i in range(l)]
         lf = float(l)
         avglen = int(math.ceil(sum(map(len, ts)) / lf) + 2)
-        hnum = self.width / avglen
+        hnum = self.width / float(avglen)
         while True:
             vnum = int(math.ceil(lf / hnum))
             maxes = [max(map(len, ts[i:i + vnum])) + 2 for i in xrange(0, l, vnum)]
@@ -940,8 +940,8 @@ keyfile will be sent to standard out
             aeltei.start()
         except (EOFError, KeyboardInterrupt):
             pass
-        except Exception:
+        except Exception as e:
             import traceback
-            traceback.print_exc()
+            print(traceback.format_exc())
         finally:
             aeltei.end()
