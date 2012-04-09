@@ -482,7 +482,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
                 break
         t = ''
         for i in range(vnum):
-            for j in range(hnum):
+            for j in range(int(hnum)):
                 u = i + vnum * j
                 if u < l:
                     tt = ts[u]
