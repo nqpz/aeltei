@@ -26,26 +26,8 @@ contactable at ns@metanohi.name (for now, just use this address for bug
 reports). This is version 0.2.0 of the program.
 
 
-Installation
-============
-
-To install aeltei the easy way, run::
-
-  easy_install3 aeltei
-
-(You must be a superuser and have python-setuptools installed to do this.)
-
-Alternatively, you can download aeltei either from
-http://metanohi.name/projects/aeltei/ or from
-http://pypi.python.org/pypi/aeltei and then install it from the downloaded
-file. To install aeltei this way, run::
-
-  tar xzf aeltei-0.2.0.tar.gz
-  cd aeltei-0.2.0/
-  python3 setup.py install
-
 Dependencies
-------------
+============
 
 aeltei depends on the ``fluidsynth`` library, the ``mingus`` Python module, the
 progam ``sf2text`` from the ``awesfx`` package of programs, and the
@@ -53,15 +35,18 @@ availability of a soundfont (free soundfonts come with ``fluidsynth``). When
 this README was written, a Python 3 version of mingus was available at
 http://code.google.com/r/artdent-mingus-python3/
 
+There's currently no stable version.
 
-Use
-===
+Old versions can be downloaded from http://metanohi.name/projects/aeltei/ and
+then installed from the downloaded file. To install aeltei this way, run::
 
-Run ``aeltei --help``.
+  $ tar xzf aeltei-*.tar.gz
+  $ cd aeltei-*/
+  % python3 setup.py install
 
 
-Development
-===========
+Installation
+============
 
 aeltei uses Git for code management. To get the latest branch, download it from
 gitorious.org::
@@ -69,11 +54,8 @@ gitorious.org::
   $ git clone git://gitorious.org/aeltei/aeltei.git
 
 
+Use
+===
 
-This document
-=============
-Copyright (C) 2011  Niels Serup
+Run ``aeltei --help``.
 
-Copying and distribution of this file, with or without modification, are
-permitted in any medium without royalty provided the copyright notice and this
-notice are preserved.  This file is offered as-is, without any warranty.
