@@ -912,6 +912,7 @@ keyfile will be sent to standard out
         parser.state('save data cleared')
     if options.calibrate:
         print calibrate_keys(),
+        sys.exit()
     elif options.play_track:
         a = AelteiPlayer(options.play_track, driver=options.driver,
                          wavfile=False)
