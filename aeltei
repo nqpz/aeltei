@@ -352,6 +352,7 @@ class Aeltei(AelteiBase):
                  keep_track=None):
         AelteiBase.__init__(self)
 
+        soundfont = soundfont or os.getenv('SOUNDFONT')
         if soundfont is None:
             for x in _likely_soundfont_paths:
                 if os.path.isfile(x):
@@ -862,7 +863,7 @@ instruments available. The keybindings are written in Emacs-style, meaning "C"
                       help='select sound driver (defaults to pulseaudio)')
     parser.add_option('-s', '--soundfont', dest='soundfont',
                       metavar='PATH', help='''\
-set the path of the soundfont you wish to use (defaults to built-in paths)''')
+set the path of the soundfont you wish to use (defaults to SOUNDFONT environment variable or built-in paths)''')
     parser.add_option('-t', '--keep-track', dest='keep_track',
                       metavar='OUTFILE', help='''\
 keep track of what you have been playing by continually saving your playing in
