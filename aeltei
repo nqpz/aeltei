@@ -928,17 +928,19 @@ keyfile will be sent to standard out
     except (IndexError, OSError):
         options.note_keys = None
     _del_stderr()
-    f = open('err', 'w')
     aeltei = Aeltei(options.samplerate, options.volume,
                     options.soundfont, options.driver,
                     options.note_keys, options.auto_load_save,
                     options.keep_track)
+    errors = None
     try:
         aeltei.start()
     except (EOFError, KeyboardInterrupt):
         pass
     except Exception as e:
         import traceback
-        print >> f, traceback.format_exc()
+        errors = traceback.format_exc()
     finally:
         aeltei.end()
+    if errors is not None:
+        print >>sys.stderr, errors
