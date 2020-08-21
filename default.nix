@@ -1,10 +1,10 @@
 with import <nixpkgs> {};
-let python = import ./requirements.nix { inherit pkgs; };
+let python = import ./nix/requirements.nix { inherit pkgs; };
 in
 stdenv.mkDerivation {
   name = "aeltei";
   buildInputs = [
-    (import ./sf2text.nix)
+    (import ./nix/sf2text.nix)
     python.packages.mingus
   ];
 
