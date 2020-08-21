@@ -1,6 +1,0 @@
-#!/usr/bin/env python3
-# Abstract filename: aeltei.scripts.aeltei
-
-import aeltei
-
-aeltei.parse_args()
