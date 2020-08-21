@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # aeltei: a virtual multi soundfont instrument environment
-# Copyright (C) 2011  Niels Serup
+# Copyright (C) 2011, 2012, 2020  Niels G. W. Serup
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Maintainer:  Niels Serup <ns@metanohi.name>
-# Abstract filename: aeltei.cmdline
+# Maintainer:  Niels G. W. Serup <ngws@metanohi.name>
 
 import sys
 import os
@@ -28,6 +27,7 @@ import subprocess
 import textwrap
 import datetime
 import math
+import traceback
 import curses
 import curses.ascii
 import curses.textpad
@@ -39,7 +39,7 @@ except ImportError: import pickle
 
 import mingus.core.notes as notes
 from mingus.midi import fluidsynth
-from mingus.containers.Note import Note
+from mingus.containers.note import Note
 
 locale.setlocale(locale.LC_ALL, '')
 _preferred_encoding = locale.getpreferredencoding()
@@ -127,7 +127,7 @@ K_STOP = _('C-s', '<end>', desc='stop all notes')
 K_NEXT = _('C-f', '<right>', desc='next instrument')
 K_PREV = _('C-b', '<left>', desc='previous instrument')
 
-K_HELP = _('C-h', desc='show this help screen')
+K_HELP = _('C-h', '?', desc='show this help screen')
 K_HELP_EXIT = _('q', 'C-e', '<del>', '<esc>',
                 desc='exit this help screen')
 K_SDOWN = _('n', 'C-n', '<down>', desc='scroll down one line')
@@ -156,7 +156,7 @@ __tool_version__ = (0, 2, 0)
 __tool_short_description__ = 'a virtual multi instrument environment'
 __tool_version_description__ = '''\
 %s %s
-Copyright (C) 2011  Niels Serup
+Copyright (C) 2011, 2012  Niels G. W. Serup
 License AGPLv3+: GNU AGPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.\
@@ -196,7 +196,7 @@ _default_qwerty_us_note_keys = __
 class ApproximatingDict(dict):
     def cache_for_fitting(self):
         self.keys_cached = tuple((x.lower(), x) for x in self.keys())
-        
+
     def get_first_fit(self, key):
         key = key.lower()
         for x in self.keys_cached:
@@ -205,9 +205,9 @@ class ApproximatingDict(dict):
 
 class NoteTracker(object):
     def __init__(self, file):
+        self.time = datetime.datetime.now()
         try:
             self.file = open(file, 'w')
-            self.time = datetime.datetime.now()
         except (TypeError, IOError):
             nothing = lambda *x: None
             self.set_soundfont = nothing
@@ -257,7 +257,7 @@ class NoteTracker(object):
         self.file.close()
 
 class AelteiPlayer(object):
-    def __init__(self, path, driver='alsa', wavfile=None):
+    def __init__(self, path, driver='pulseaudio', wavfile=None):
         self.path = path
         self.driver = driver
         self.wavfile = wavfile
@@ -272,7 +272,7 @@ class AelteiPlayer(object):
             self.sleep = self._add_wav_frames
             self.end = lambda: self.wave.close()
         self.textra = 0
-            
+
     def _set_wav_frame_rate(self, f):
         self.wave.setframerate(f)
         self.frame_rate = f
@@ -287,6 +287,8 @@ class AelteiPlayer(object):
             self.wave = wave.open(self.wavfile, 'wb')
             self.wave.setnchannels(2)
             self.wave.setsampwidth(2)
+
+
 
         with open(self.path) as f:
             for x in f:
@@ -331,7 +333,7 @@ class AelteiBase(object):
         except OSError: pass
         try: os.mkdir(self.cfg_saves_dir)
         except OSError: pass
-        
+
     def clear_cache(self):
         try:
             shutil.rmtree(self.cfg_cache_dir)
@@ -346,7 +348,7 @@ class AelteiBase(object):
 
 class Aeltei(AelteiBase):
     def __init__(self, samplerate=44100, volume=75, soundfont=None,
-                 driver='alsa', note_keys=None, auto_load_save=True,
+                 driver='pulseaudio', note_keys=None, auto_load_save=True,
                  keep_track=None):
         AelteiBase.__init__(self)
 
@@ -379,7 +381,7 @@ class Aeltei(AelteiBase):
         self.tracker.set_samplerate(self.samplerate)
         self.tracker.set_volume(self.volume)
         self.tracker.set_soundfont(self.soundfont)
-        
+
         self.current_instrument = None
         self.instruments_text = None
 
@@ -401,11 +403,11 @@ class Aeltei(AelteiBase):
 
     def _get_instruments(self):
         try:
-            instrtext = subprocess.Popen((_sf2text_prog, self.soundfont),
-                                         stdout=subprocess.PIPE).communicate()[0]
-        except IOError:
-            raise RuntimeError('the %s program, part of the %s package, \
-is not installed' % (_sf2text_prog, _sf2text_package))
+            instrtext = subprocess.check_output([_sf2text_prog, self.soundfont])
+        except subprocess.CalledProcessError:
+            print >>sys.stderr, 'the %s program, part of the %s package, \
+is not installed' % (_sf2text_prog, _sf2text_package)
+            sys.exit(1)
         return tuple(sorted([
                     (x[0], int(x[1]), int(x[2])) for x in
                     re.findall(r'"([\w ]+?)" \(preset (\d+)\) \(bank (\d+)\)',
@@ -419,7 +421,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
                 if prev_soundfont == self.soundfont:
                     self.select_instrument(prev_instrument)
                     self.instruments_text = prev_instruments_text
-        except (IOError, ValueError):
+        except (IOError, ValueError, pickle.UnpicklingError, EOFError):
             self.base_level = 0
 
     def save_saves(self):
@@ -468,7 +470,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         ts = [sl % (i, self.instruments[i][0]) for i in range(l)]
         lf = float(l)
         avglen = int(math.ceil(sum(map(len, ts)) / lf) + 2)
-        hnum = self.width / avglen
+        hnum = self.width / float(avglen)
         while True:
             vnum = int(math.ceil(lf / hnum))
             maxes = [max(map(len, ts[i:i + vnum])) + 2 for i in xrange(0, l, vnum)]
@@ -479,7 +481,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
                 break
         t = ''
         for i in range(vnum):
-            for j in range(hnum):
+            for j in range(int(hnum)):
                 u = i + vnum * j
                 if u < l:
                     tt = ts[u]
@@ -494,7 +496,7 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         if i > _max_note:
             i = _max_note
         return i
-    
+
     def play_note(self, i):
         i = self._fix_note(i)
         fluidsynth.play_Note(_notes[i])
@@ -537,10 +539,11 @@ is not installed' % (_sf2text_prog, _sf2text_package))
             self.stop_note(key[1])
 
     def start(self):
-        try:
-            curses.wrapper(self._curses_start)
-        except ExitCursesWrapper:
-            pass
+        self.setup_config_dir()
+        self.get_instruments()
+        fluidsynth.init(self.soundfont, self.driver)
+        fluidsynth.main_volume(1, self.volume)
+        curses.wrapper(self._curses_start)
 
     def update_status(self):
         self.scr.clear()
@@ -557,7 +560,6 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         curses.curs_set(0)
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
         self.color_white_on_black = curses.color_pair(1) | curses.A_BOLD
-
         self._update_dimensions()
         self.help_width = self.width if self.width < 80 else 80
         self.keybindings_text = _keybindings.format(self.help_width)
@@ -569,12 +571,6 @@ is not installed' % (_sf2text_prog, _sf2text_package))
         self.height, self.width = self.scr.getmaxyx()
 
     def _start(self):
-        self.setup_config_dir()
-        self.get_instruments()
-
-        fluidsynth.init(self.soundfont, self.driver)
-        fluidsynth.main_volume(1, self.volume)
-
         if self.auto_load_save:
             self.get_saves()
         if self.current_instrument is None:
@@ -605,7 +601,7 @@ it is not very good).
                                     else x[0] for x in self.text).split('\n')
         self.lines_num = len(self.text) + 1
         self.line = 0
-        
+
     def show_help(self):
         self.scr.clear()
         self._refresh_help_pad()
@@ -678,7 +674,7 @@ it is not very good).
             elif key in K_UPDATE:
                 self._update_dimensions()
             self._refresh_help_pad()
-        
+
     def _loop(self):
         while True:
             key = self._get_key()
@@ -803,7 +799,7 @@ for the last note.'
             t[x[-1]] = (j, i)
         j = not j
     return pickle.dumps(_)
-            
+
 def calibrate_keys():
     print >>sys.stderr, '''\
 Enter the characters you wish to use as notes. The
@@ -834,7 +830,7 @@ if __name__ == '__main__':
 
         def state(self, message):
             print '%s: %s' % (self.prog, message)
-    
+
     parser = NewOptionParser(
         prog=__tool_name__,
         usage='Usage: %prog [OPTION]... [KEYFILE]',
@@ -861,9 +857,9 @@ instruments available. The keybindings are written in Emacs-style, meaning "C"
     parser.add_option('-u', '--volume', dest='volume', default=75,
                       metavar='0--100', type='int',
                       help='set the main volume (defaults to 75)')
-    parser.add_option('-d', '--driver', dest='driver', default='alsa',
+    parser.add_option('-d', '--driver', dest='driver', default='pulseaudio',
                       metavar='Hz', type='choice', choices=_usable_drivers,
-                      help='select sound driver (defaults to alsa)')
+                      help='select sound driver (defaults to pulseaudio)')
     parser.add_option('-s', '--soundfont', dest='soundfont',
                       metavar='PATH', help='''\
 set the path of the soundfont you wish to use (defaults to built-in paths)''')
@@ -910,6 +906,7 @@ keyfile will be sent to standard out
         parser.state('save data cleared')
     if options.calibrate:
         print calibrate_keys(),
+        sys.exit()
     elif options.play_track:
         a = AelteiPlayer(options.play_track, driver=options.driver,
                          wavfile=False)
@@ -924,22 +921,23 @@ keyfile will be sent to standard out
             not options.record_track:
         setproctitle(__tool_name__)
 
-        try:
-            with open(args[0]) as f:
-                options.note_keys = pickle.load(f)
-        except (IndexError, OSError):
-            options.note_keys = None
-        _del_stderr()
-        aeltei = Aeltei(options.samplerate, options.volume,
-                        options.soundfont, options.driver,
-                        options.note_keys, options.auto_load_save,
-                        options.keep_track)
-        try:
-            aeltei.start()
-        except (EOFError, KeyboardInterrupt):
-            pass
-        except Exception:
-            import traceback
-            traceback.print_exc()
-        finally:
-            aeltei.end()
+    try:
+        with open(args[0]) as f:
+            options.note_keys = pickle.load(f)
+    except (IndexError, OSError):
+        options.note_keys = None
+    _del_stderr()
+    f = open('err', 'w')
+    aeltei = Aeltei(options.samplerate, options.volume,
+                    options.soundfont, options.driver,
+                    options.note_keys, options.auto_load_save,
+                    options.keep_track)
+    try:
+        aeltei.start()
+    except (EOFError, KeyboardInterrupt):
+        pass
+    except Exception as e:
+        import traceback
+        print >> f, traceback.format_exc()
+    finally:
+        aeltei.end()
