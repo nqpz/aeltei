@@ -1,0 +1,42 @@
+diff --git a/Makefile.am b/Makefile.am
+index 6cc8073..51933dc 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,12 +1,14 @@
+ SUBDIRS = awelib include samples etc
+ 
+-bin_PROGRAMS = sfxload asfxload aweset gusload agusload setfx sf2text text2sf sfxtest
++bin_PROGRAMS = sf2text
+ LDADD = awelib/libawe.a
+ 
+ AUTOMAKE_OPTIONS = foreign
+ 
+ INCLUDES = -Iinclude
+ 
++CFLAGS=-g -O2 -lm
++
+ asfxload_SOURCES = asfxload.c alsa.c
+ asfxload_LDADD = awelib/libawe.a @ALSA_LIBS@
+ 
+@@ -26,6 +28,3 @@ man_MANS = sfxload.1
+ 
+ EXTRA_DIST = sfxload.1 SBKtoSF2.txt
+ 
+-install-data-hook:
+-	rm -f $(DESTDIR)$(mandir)/man1/asfxload.1
+-	(cd $(DESTDIR)$(mandir)/man1 && $(LN_S) sfxload.1 asfxload.1)
+diff --git a/configure.in b/configure.in
+index 36124c7..b9dd6d3 100644
+--- a/configure.in
++++ b/configure.in
+@@ -7,9 +7,8 @@ AC_PROG_CC
+ AC_PROG_INSTALL
+ AC_HEADER_STDC
+ AC_C_BIGENDIAN
+-AM_PROG_LIBTOOL
++AC_PROG_RANLIB
+ 
+-AM_PATH_ALSA(1.0.0)
+ 
+ AC_ARG_WITH(default-volume,
+   [  --with-default-volume=percent  Default volume (in percent)],
