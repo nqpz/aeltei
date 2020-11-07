@@ -1,8 +1,10 @@
+# Use this file with nix-shell or similar tools; see https://nixos.org/
 with import <nixpkgs> {};
-let python = import ./nix/requirements.nix { inherit pkgs; };
+
+let
+  python = import ./nix/requirements.nix { inherit pkgs; };
 in
-stdenv.mkDerivation {
-  name = "aeltei";
+mkShell {
   buildInputs = [
     (import ./nix/sf2text.nix)
     python.packages.mingus
