@@ -2,7 +2,6 @@
 with import <nixpkgs> {};
 
 let
-  # This is the last commit before ghc844 was removed.
   pkgs = import (builtins.fetchTarball {
     name = "nixpkgs-unstable-ghc844";
     url = "https://github.com/nixos/nixpkgs/archive/8ffedd83693d6effd1c271f3ad17c38f7dcecf42.tar.gz";
