@@ -2,6 +2,12 @@
 with import <nixpkgs> {};
 
 let
+  # This is the last commit before ghc844 was removed.
+  pkgs = import (builtins.fetchTarball {
+    name = "nixpkgs-unstable-ghc844";
+    url = "https://github.com/nixos/nixpkgs/archive/8ffedd83693d6effd1c271f3ad17c38f7dcecf42.tar.gz";
+    sha256 = "1c2m2b0dslqkcwhg1yfh1mhfkc83xs1j78w9m4a2ymgcp370srs2";
+  }) {};
   python = import ./nix/requirements.nix { inherit pkgs; };
 in
 mkShell {
@@ -11,8 +17,8 @@ mkShell {
   ];
 
   shellHook = ''
-    export LIBRARY_PATH=${fluidsynth_1}/lib:$LIBRARY_PATH
-    export LD_LIBRARY_PATH=${fluidsynth_1}/lib:$LD_LIBRARY_PATH
-    export SOUNDFONT=${soundfont-fluid}/share/soundfonts/FluidR3_GM2-2.sf2
+    export LIBRARY_PATH=${pkgs.fluidsynth_1}/lib:$LIBRARY_PATH
+    export LD_LIBRARY_PATH=${pkgs.fluidsynth_1}/lib:$LD_LIBRARY_PATH
+    export SOUNDFONT=${pkgs.soundfont-fluid}/share/soundfonts/FluidR3_GM2-2.sf2
   '';
 }
